@@ -19,6 +19,7 @@ module copypaste(method, vector, copy=true, condition=true) {
     children();
   }
 }
+
 module mirror_copy(vector, copy=true, condition=true) {
   copypaste("mirror", vector, copy, condition)
   children();
