@@ -18,6 +18,7 @@ $fn=__Roundness;
 //for preview only, disable before generating STL
 __DisplayCardStack = true;
 __PartsVerticalSeparation = 20; //[0:200]
+__SideBySide = "false"; // [false, X, Y]
 
 /* [Dimensions] */
 __CardStackSize = [88,63.5,50];
@@ -62,7 +63,7 @@ function __Wall_bx() = BasePlateDimensions().x-2*__Corner_b();
 function __Wall_ay() = BasePlateDimensions().y-2*__Corner_a();
 function __Wall_by() = BasePlateDimensions().y-2*__Corner_b();
 
-function SeparationVector() = [0,0,CardStackHeight()*__PartsVerticalSeparation/100];
+function SeparationVector() = [0,0,CardStackHeight()*__PartsVerticalSeparation/100*(__SideBySide=="false"?1:0)];
 
 module Floor() {
   difference() {
@@ -100,7 +101,7 @@ module Wall(x=true,angle=0) {
 }
 
 color("red")
-translate(SeparationVector()/2)
+SeparateRoofFromFloor()
 {
   if (__DisplayRoof)
     Roof();
@@ -115,6 +116,17 @@ translate(SeparationVector()/2)
     }
     Magnets();
   }
+}
+
+module SeparateRoofFromFloor() {
+//  translate([0,BasePlateDimensions().y+__WallThickness,0])
+  translate([
+    __SideBySide=="X"?(BasePlateDimensions().x+__WallThickness*2):0,
+    __SideBySide=="Y"?(BasePlateDimensions().y+__WallThickness*2):0,
+    0])
+  rotate([__SideBySide=="false"?0:180,0,0])
+  translate(SeparationVector()/2)
+  children();
 }
 
 color("green")
