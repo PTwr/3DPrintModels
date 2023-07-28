@@ -1,3 +1,6 @@
+//Ganimedes Hero tile: 37x46 42mm stack
+//CCG (Terraforming Mars) 63.5x88
+
 use <../libs/RoundedShapes.scad>
 use <../libs/PrettyWalls.scad>
 use <../libs/CopyPaste.scad>
@@ -19,6 +22,7 @@ $fn=__Roundness;
 __DisplayCardStack = true;
 __PartsVerticalSeparation = 20; //[0:200]
 __SideBySide = "false"; // [false, X, Y]
+__PartsHorizontalSeparation = 5; //[0:200]
 
 /* [Dimensions] */
 __CardStackSize = [88,63.5,50];
@@ -51,7 +55,7 @@ __RoundingRadiusPercent = 15; //[0:20]
 __SlopedBezels = true;
 
 //Helper functions
-function BasePlateDimensions() = [__CardStackSize.x+__WallThickness+__EmptySpaceMargin*2, __CardStackSize.y+__WallThickness+__EmptySpaceMargin*2, __WallThickness];
+function BasePlateDimensions() = [__CardStackSize.x+__WallThickness*2+__EmptySpaceMargin*2, __CardStackSize.y+__WallThickness*2+__EmptySpaceMargin*2, __WallThickness];
 function CardStackHeight() = __CardStackSize.z+__EmptySpaceMargin;
 function RoundingRadius() = __IsRounded ? min(BasePlateDimensions().x, BasePlateDimensions().y)*__RoundingRadiusPercent/100 : 0.000001;
 
@@ -121,8 +125,8 @@ SeparateRoofFromFloor()
 module SeparateRoofFromFloor() {
 //  translate([0,BasePlateDimensions().y+__WallThickness,0])
   translate([
-    __SideBySide=="X"?(BasePlateDimensions().x+__WallThickness*2):0,
-    __SideBySide=="Y"?(BasePlateDimensions().y+__WallThickness*2):0,
+    __SideBySide=="X"?(BasePlateDimensions().x*(1+__PartsHorizontalSeparation/100)):0,
+    __SideBySide=="Y"?(BasePlateDimensions().y*(1+__PartsHorizontalSeparation/100)):0,
     0])
   rotate([__SideBySide=="false"?0:180,0,0])
   translate(SeparationVector()/2)
@@ -193,7 +197,7 @@ module Balls(angle, count, h, radius, inset = undef) {
   let(dX=h/(count+1)) {
     for(offset = [-h/2+dX:dX:-h/2+dX*count]) {
       translate([0,-inset+radius,offset])
-      sphere(r=radius);
+      sphere(r=radius, $fn=20);
     }
   }
 }
@@ -208,7 +212,7 @@ module MagnetLine(length, count) {
   let(dX=length/(count+1))
   for(n = [1:count])
     translate([-length/2+n*dX,0,0])
-    cylinder(__MagnetHeight*1, r = __MagnetRadius, center=true);
+    cylinder(__MagnetHeight*1, r = __MagnetRadius, center=true, $fn=20);
 }
 
 module Magnets() {
