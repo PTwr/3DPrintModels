@@ -36,6 +36,13 @@ __BallClipCount = 3; //[1:10]
 //% of ball hidden inside of wall, increase for softer clip
 __BallClipInset = 50; //[50:100]
 
+/* [Magnets] */
+__MagnetsEnabled = true;
+__MagnetCountX = 3;
+__MagnetCountY = 2;
+__MagnetRadius = 1.5;
+__MagnetHeight = 2;
+
 /* [Eye Candy] */
 __IsRounded = true;
 //% of shorter side that will be rounded
@@ -44,7 +51,7 @@ __SlopedBezels = true;
 
 //Helper functions
 function BasePlateDimensions() = [__CardStackSize.x+__WallThickness+__EmptySpaceMargin*2, __CardStackSize.y+__WallThickness+__EmptySpaceMargin*2, __WallThickness];
-function CardStackHeight() = __CardStackSize.z+__EmptySpaceMargin*2;
+function CardStackHeight() = __CardStackSize.z+__EmptySpaceMargin;
 function RoundingRadius() = __IsRounded ? min(BasePlateDimensions().x, BasePlateDimensions().y)*__RoundingRadiusPercent/100 : 0.000001;
 
 function __Corner_a() = min(BasePlateDimensions().x,BasePlateDimensions().y)*__CornerUpperPercent/100;
@@ -58,8 +65,12 @@ function __Wall_by() = BasePlateDimensions().y-2*__Corner_b();
 function SeparationVector() = [0,0,CardStackHeight()*__PartsVerticalSeparation/100];
 
 module Floor() {
-  translate([0,0,-BasePlateDimensions().z/2-CardStackHeight()/2])
-  PrettyBoxWall(BasePlateDimensions(), roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness*2);
+  difference() {
+    translate([0,0,-BasePlateDimensions().z/2-CardStackHeight()/2])
+    PrettyBoxWall(BasePlateDimensions(), roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness*2);
+    
+    Magnets();
+  }
 }
 
 module Roof() {
@@ -83,7 +94,6 @@ module Wall(x=true,angle=0) {
     mirror_copy_x()
     translate([min(a,b)/2,0,0])
     translate([abs(a-b)/2,0,0])
-    translate([-__WallThickness/2,0,0])
     rotate([90,90,0])
     BallClip();
   }
@@ -94,12 +104,17 @@ translate(SeparationVector()/2)
 {
   if (__DisplayRoof)
     Roof();
-  if (__DisplayWalls && __DisplayOnlyOneWall != "Y")
-    mirror_copy_y(condition = __DisplayOnlyOneWall == "false")
-    Wall(true,0);
-  if (__DisplayWalls && __DisplayOnlyOneWall != "X")
-    mirror_copy_x(condition = __DisplayOnlyOneWall == "false")
-    Wall(false, 90);
+  difference() {
+    union() {
+      if (__DisplayWalls && __DisplayOnlyOneWall != "Y")
+        mirror_copy_y(condition = __DisplayOnlyOneWall == "false")
+        Wall(true,0);
+      if (__DisplayWalls && __DisplayOnlyOneWall != "X")
+        mirror_copy_x(condition = __DisplayOnlyOneWall == "false")
+        Wall(false, 90);
+    }
+    Magnets();
+  }
 }
 
 color("green")
@@ -125,13 +140,11 @@ module Corner() {
   translate([-RoundingRadius(),-RoundingRadius(),0])
   translate([BasePlateDimensions().x/2,BasePlateDimensions().y/2,0])
   BendCenterSection([dim.x,dim.z,dim[3]], [bendLength,CardStackHeight(),__WallThickness] , reverse=false)
-  difference() {
+   difference() {
     PrettyBoxWall(dimensions=dim, roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness, roundExternal=false, roundInternal=true);
     
     mirror_copy_x()
     translate([min(dim[0],dim[1])/2,0,0])
-    translate([abs(dim[0]-dim[1])/2,0,0])
-    translate([-__WallThickness/2,0,0])
     rotate([0,-90,90])
     BallClip();
   }
@@ -158,6 +171,7 @@ module BallClip() {
     r=__WallThickness/2*__BallClipSize/100,
     inset=r*2*__BallClipInset/100
   )
+  translate([0,-abs(a-b)/4,0])
   Balls(alpha, count, c, r, inset);
 }
 
@@ -165,9 +179,33 @@ module Balls(angle, count, h, radius, inset = undef) {
   let(dY=inset==undef?0:inset)
   rotate([90-angle,0,0])
   let(dX=h/(count+1)) {
-    for(i = [1:count]) {
-      translate([0,radius-dY,-h/2+dX*i])
+    for(offset = [-h/2+dX:dX:-h/2+dX*count]) {
+      translate([0,-inset+radius,offset])
       sphere(r=radius);
     }
   }
+}
+
+
+
+use <../../../dotSCAD/src/along_with.scad>
+use <../../../dotSCAD/src/shape_circle.scad>
+use <../../../dotSCAD/src/shape_arc.scad>
+
+module MagnetLine(length, count) {
+  let(dX=length/(count+1))
+  for(n = [1:count])
+    translate([-length/2+n*dX,0,0])
+    cylinder(__MagnetHeight*1, r = __MagnetRadius, center=true);
+}
+
+module Magnets() {
+  mirror_copy_y()
+  translate([0,BasePlateDimensions().y/2-__WallThickness/2,-CardStackHeight()/2])
+  MagnetLine(__Wall_ax(), __MagnetCountX);
+  
+  mirror_copy_x()
+  translate([BasePlateDimensions().x/2-__WallThickness/2,0,-CardStackHeight()/2])
+  rotate([0,0,90])
+  MagnetLine(__Wall_ay(), __MagnetCountY);
 }
