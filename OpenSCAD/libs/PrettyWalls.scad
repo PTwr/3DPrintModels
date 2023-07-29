@@ -1,6 +1,6 @@
 use <RoundedShapes.scad>
-use <../../../dotSCAD/src/hollow_out.scad>
-use <../../../dotSCAD/src/shape_trapezium.scad>
+use <dotSCAD/src/hollow_out.scad>
+use <dotSCAD/src/shape_trapezium.scad>
 
 function RectDimensionsToTrapezoidDimensions(dimensions) = [
   dimensions[0],

@@ -29,7 +29,7 @@ __CardStackSize = [88,63.5,50];
 __WallThickness = 5;
 __EmptySpaceMargin= 5;
 
-/* [Sides] */
+/* [Sides]*/
 __CornerUpperPercent = 30; //[10:40]
 __CornerBottomPercent = 20; //[10:40]
 

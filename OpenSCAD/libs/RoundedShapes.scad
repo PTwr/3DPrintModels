@@ -1,4 +1,4 @@
-use <../../../dotSCAD/src/bend.scad>
+use <dotSCAD/src/bend.scad>
 
 module round_internal(r) {
   round_external(-r)
