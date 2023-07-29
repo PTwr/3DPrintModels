@@ -202,12 +202,6 @@ module Balls(angle, count, h, radius, inset = undef) {
   }
 }
 
-
-
-use <../../../dotSCAD/src/along_with.scad>
-use <../../../dotSCAD/src/shape_circle.scad>
-use <../../../dotSCAD/src/shape_arc.scad>
-
 module MagnetLine(length, count) {
   let(dX=length/(count+1))
   for(n = [1:count])
