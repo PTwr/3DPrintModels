@@ -23,6 +23,7 @@ __DisplayCardStack = true;
 __PartsVerticalSeparation = 20; //[0:200]
 __SideBySide = "false"; // [false, X, Y]
 __PartsHorizontalSeparation = 5; //[0:200]
+__WallVerticalSeparation = 0; //[0:200]
 
 /* [Dimensions] */
 __CardStackSize = [88,63.5,50];
@@ -68,6 +69,7 @@ function __Wall_ay() = BasePlateDimensions().y-2*__Corner_a();
 function __Wall_by() = BasePlateDimensions().y-2*__Corner_b();
 
 function SeparationVector() = [0,0,CardStackHeight()*__PartsVerticalSeparation/100*(__SideBySide=="false"?1:0)];
+function WallSeparationVector() = [0,0,CardStackHeight()*__WallVerticalSeparation/100];
 
 module Floor() {
   difference() {
@@ -108,6 +110,7 @@ color("red")
 SeparateRoofFromFloor()
 {
   if (__DisplayRoof)
+    translate(WallSeparationVector())
     Roof();
   difference() {
     union() {
@@ -137,6 +140,7 @@ color("green")
 translate(-SeparationVector()/2)
 {
   if (__DisplayFloor)
+    translate(-WallSeparationVector())
     Floor();
   if (__DisplayCorners)
     mirror_copy_y(condition = !__DisplayOnlyOneCorner)
