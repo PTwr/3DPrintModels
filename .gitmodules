@@ -1,0 +1,3 @@
+[submodule "dotSCAD"]
+	path = dotSCAD
+	url = https://github.com/JustinSDK/dotSCAD
