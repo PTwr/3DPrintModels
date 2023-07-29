@@ -33,6 +33,12 @@ __EmptySpaceMargin= 5;
 /* [Sides]*/
 __CornerUpperPercent = 30; //[10:40]
 __CornerBottomPercent = 20; //[10:40]
+__PegConnectorsEnabled = true;
+__PegConnectorsSize = 50; //[0:100]
+__PegConnectorsOnSides = true;
+__PegConnectorsPerWallX = 3;
+__PegConnectorsPerWallY = 2;
+__PegConnectorsPerCornerWing = 1;
 
 /* [Clip] */
 __BallClipEnabled = true;
@@ -71,6 +77,25 @@ function __Wall_by() = BasePlateDimensions().y-2*__Corner_b();
 function SeparationVector() = [0,0,CardStackHeight()*__PartsVerticalSeparation/100*(__SideBySide=="false"?1:0)];
 function WallSeparationVector() = [0,0,CardStackHeight()*__WallVerticalSeparation/100];
 
+use <../libs/dotSCAD/src/part/connector_peg.scad>
+module PegConnectorsHole() {
+  if (__PegConnectorsEnabled) {
+  }
+}
+module PegConnectorsStud(radius=2.5, spacing=0.2, void = false) {
+  if (__PegConnectorsEnabled) {
+    connector_peg(
+        radius = radius, 
+        spacing = spacing,
+        void = void
+    );
+  }
+}
+module PegConnectorsWall(length, voidspacing = 0.2, void = false) {
+  CopyBetween([-length/2,0,0],[length/2,0,0], __PegConnectorsPerWallX)
+  PegConnectorsStud(radius = __WallThickness/2*__PegConnectorsSize/100, spacing = voidspacing, void = void, $fn=20);
+}
+
 module Floor() {
   difference() {
     translate([0,0,-BasePlateDimensions().z/2-CardStackHeight()/2])
@@ -81,9 +106,37 @@ module Floor() {
 }
 
 module Roof() {
-  translate([0,0,+BasePlateDimensions().z/2+CardStackHeight()/2])
-  mirror([0,0,1])
-  PrettyBoxWall(dimensions=BasePlateDimensions(), roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness*2);
+  let(h=CardStackHeight())
+  difference() {
+    union() {
+      translate([0,0,+BasePlateDimensions().z/2+h/2])
+      mirror([0,0,1])
+      PrettyBoxWall(dimensions=BasePlateDimensions(), roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness*2);
+      
+      if (!__PegConnectorsOnSides) {
+        mirror_copy_y()
+        translate([0,BasePlateDimensions().y/2-__WallThickness/2,h/2])
+        rotate([180,0,0])
+        PegConnectorsWall(__Wall_bx(), void=false);
+        
+        mirror_copy_x()
+        translate([BasePlateDimensions().x/2-__WallThickness/2,0,h/2])
+        rotate([180,0,90])
+        PegConnectorsWall(__Wall_by(), void=false);
+      }
+    }
+    if (__PegConnectorsOnSides) {
+      mirror_copy_y()
+      translate([0,BasePlateDimensions().y/2-__WallThickness/2,h/2])
+      rotate([0,0,0])
+      PegConnectorsWall(__Wall_bx(), void=true);
+        
+      mirror_copy_x()
+      translate([BasePlateDimensions().x/2-__WallThickness/2,0,h/2])
+      rotate([0,0,90])
+      PegConnectorsWall(__Wall_by(), void=true);
+    }
+  }
 }
 
 module Wall(x=true,angle=0) {
@@ -92,17 +145,31 @@ module Wall(x=true,angle=0) {
   rotate([90,0,0])
   let(
     a=x?__Wall_ax():__Wall_ay(),
-    b=x?__Wall_bx():__Wall_by()
+    b=x?__Wall_bx():__Wall_by(),
+    h=CardStackHeight()
   )
-  union() 
-  {
-    PrettyBoxWall(dimensions=[a,b,CardStackHeight(),__WallThickness], roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness, roundExternal=false, roundInternal=true);
-    
-    mirror_copy_x()
-    translate([min(a,b)/2,0,0])
-    translate([abs(a-b)/2,0,0])
-    rotate([90,90,0])
-    BallClip();
+  difference() {
+    union() 
+    {
+      PrettyBoxWall(dimensions=[a,b,h,__WallThickness], roundingRadius=RoundingRadius(), windowBezelThickness=__WallThickness, roundExternal=false, roundInternal=true);
+      
+      mirror_copy_x()
+      translate([min(a,b)/2,0,0])
+      translate([abs(a-b)/2,0,0])
+      rotate([90,90,0])
+      BallClip();
+      
+      if (__PegConnectorsOnSides) {
+        translate([0,h/2,0])
+        rotate([-90,0,0])
+        PegConnectorsWall(b, void=false);
+      }
+    }
+    if (!__PegConnectorsOnSides) {
+      translate([0,h/2,0])
+      rotate([90,0,0])
+      PegConnectorsWall(b, void=true);
+    }
   }
 }
 
