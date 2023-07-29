@@ -36,10 +36,10 @@ __CornerBottomPercent = 20; //[10:40]
 /* [Clip] */
 __BallClipEnabled = true;
 //% of wall thickness taken by clip
-__BallClipSize = 80; //[0:100]
-__BallClipCount = 3; //[1:10]
+__BallClipSize = 50; //[0:100]
+__BallClipCount = 1; //[1:10]
 //% of ball hidden inside of wall, increase for softer clip
-__BallClipInset = 50; //[50:100]
+__BallClipInset = 75; //[50:100]
 
 /* [Magnets] */
 __MagnetsEnabled = true;
