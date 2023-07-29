@@ -1,0 +1,37 @@
+{
+    "parameterSets": {
+        "ganimedes hero": {
+            "__BallClipCount": "1",
+            "__BallClipEnabled": "true",
+            "__BallClipInset": "77",
+            "__BallClipSize": "50",
+            "__CardStackSize": "[37, 46, 42]",
+            "__CornerBottomPercent": "20",
+            "__CornerUpperPercent": "30",
+            "__DisplayCardStack": "true",
+            "__DisplayCorners": "true",
+            "__DisplayFloor": "true",
+            "__DisplayOnlyOneCorner": "false",
+            "__DisplayOnlyOneWall": "false",
+            "__DisplayRoof": "true",
+            "__DisplayWalls": "true",
+            "__EmptySpaceMargin": "1",
+            "__IsRounded": "true",
+            "__MagnetCountX": "1",
+            "__MagnetCountY": "1",
+            "__MagnetHeight": "2",
+            "__MagnetRadius": "1.5",
+            "__MagnetsEnabled": "true",
+            "__PartsHorizontalSeparation": "10",
+            "__PartsVerticalSeparation": "20",
+            "__RoundingRadiusPercent": "15",
+            "__Roundness": "0",
+            "__SideBySide": "X",
+            "__SlopedBezels": "true",
+            "__WallThickness": "4"
+        }
+    },
+    "fileFormatVersion": "1",
+    "parameterSets": "",
+    "parameterSets": ""
+}
