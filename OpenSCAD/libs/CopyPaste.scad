@@ -72,3 +72,25 @@ module translate_copy_z(offset, copy=true, condition=true) {
   translate_copy([0,0,offset], copy, condition)
   children();
 }
+
+module CopyBetween(from, to, count, includeFrom = false, includeTo = false) {
+  CopyToPoints(PointsBetween(from, to, count,includeFrom,includeTo))
+  children();
+}
+
+module CopyToPoints(points) {
+  for (p=points)
+    translate(p)
+    children();
+}
+
+function PointsBetween(from, to, count, includeFrom = false, includeTo = false) =
+  let(c=count-(includeFrom?1:0)-(includeTo?1:0))
+  let(
+    dX=(to.x-from.x)/(c+1),
+    dY=(to.y-from.y)/(c+1),
+    dZ=(to.z-from.z)/(c+1)
+  )
+  [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
+    [from.x+dX*n,from.y+dY*n,from.z+dZ*n]
+  ];

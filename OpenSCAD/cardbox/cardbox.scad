@@ -191,22 +191,15 @@ module BallClip() {
   Balls(alpha, count, c, r, inset);
 }
 
-module Balls(angle, count, h, radius, inset = undef) {
-  let(dY=inset==undef?0:inset)
+module Balls(angle, count, h, radius, inset = undef) {let(dY=inset==undef?0:inset)
   rotate([90-angle,0,0])
-  let(dX=h/(count+1)) {
-    for(offset = [-h/2+dX:dX:-h/2+dX*count]) {
-      translate([0,-inset+radius,offset])
-      sphere(r=radius, $fn=20);
-    }
-  }
+  CopyBetween([0,-inset+radius,-h/2],[0,-inset+radius,h/2],count)
+  sphere(r=radius, $fn=20);
 }
 
-module MagnetLine(length, count) {
-  let(dX=length/(count+1))
-  for(n = [1:count])
-    translate([-length/2+n*dX,0,0])
-    cylinder(__MagnetHeight*2, r = __MagnetRadius, center=true, $fn=20);
+module MagnetLine(length, count) {  
+  CopyBetween([-length/2,0,0],[length/2,0,0],count)
+  cylinder(__MagnetHeight*2, r = __MagnetRadius, center=true, $fn=20);
 }
 
 module Magnets() {
