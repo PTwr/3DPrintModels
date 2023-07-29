@@ -212,7 +212,7 @@ module MagnetLine(length, count) {
   let(dX=length/(count+1))
   for(n = [1:count])
     translate([-length/2+n*dX,0,0])
-    cylinder(__MagnetHeight*1, r = __MagnetRadius, center=true, $fn=20);
+    cylinder(__MagnetHeight*2, r = __MagnetRadius, center=true, $fn=20);
 }
 
 module Magnets() {
