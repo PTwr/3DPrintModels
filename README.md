@@ -14,7 +14,7 @@
 
 ## Dependencies
 
-- [dotSCAD](https://github.com/JustinSDK/dotSCAD) - 
+- [dotSCAD](https://github.com/JustinSDK/dotSCAD) - (autofetched as git submodule during checkout, won't be present if repo is downloaded as zip from github)
 
 ## Examples
  
