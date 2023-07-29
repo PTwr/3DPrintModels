@@ -73,8 +73,8 @@ module translate_copy_z(offset, copy=true, condition=true) {
   children();
 }
 
-module CopyBetween(from, to, count, includeFrom = false, includeTo = false) {
-  CopyToPoints(PointsBetween(from, to, count,includeFrom,includeTo))
+module CopyBetween(from, to, count, includeFrom = false, includeTo = false, skip=[]) {
+  CopyToPoints(PointsBetween(from, to, count,includeFrom,includeTo, skip))
   children();
 }
 
@@ -84,7 +84,8 @@ module CopyToPoints(points) {
     children();
 }
 
-function PointsBetween(from, to, count, includeFrom = false, includeTo = false) =
+use <dotSCAD/src/util/contains.scad>
+function PointsBetween(from, to, count, includeFrom = false, includeTo = false, skip=[]) =
   let(c=count-(includeFrom?1:0)-(includeTo?1:0))
   let(
     dX=(to.x-from.x)/(c+1),
@@ -92,5 +93,6 @@ function PointsBetween(from, to, count, includeFrom = false, includeTo = false) 
     dZ=(to.z-from.z)/(c+1)
   )
   [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
-    [from.x+dX*n,from.y+dY*n,from.z+dZ*n]
+    if (contains(skip,n)==false)
+      [from.x+dX*n,from.y+dY*n,from.z+dZ*n]
   ];
