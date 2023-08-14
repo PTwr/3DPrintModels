@@ -1,15 +1,9 @@
 use <RoundedShapes.scad>
+use <GeometryHelpers.scad>
 use <dotSCAD/src/hollow_out.scad>
 use <dotSCAD/src/shape_trapezium.scad>
 
-function RectDimensionsToTrapezoidDimensions(dimensions) = [
-  dimensions[0],
-  dimensions[3] == undef ? dimensions[0] : dimensions[1],
-  dimensions[3] == undef ? dimensions[1] : dimensions[2],
-  dimensions[3] == undef ? dimensions[2] : dimensions[3]
-  ];
-
-module PrettyBoxWall(dimensions = [80,50,5], windowBezelThickness = undef, roundingRadius = 0, slopedBezel = true, roundExternal=true, roundInternal=true) {
+module PrettyBoxWall(dimensions = [80,50,5], windowBezelThickness = undef, roundingRadius = 5, slopedBezel = true, roundExternal=true, roundInternal=true) {
   union() {
     color("red")
     BoxWall(dimensions, windowBezelThickness*(windowBezelThickness != undef ? 0.5 : 1), roundingRadius, [1,1], roundExternal, roundInternal);
@@ -44,3 +38,10 @@ module BoxWall(dimensions = [80,50,5], windowBezelThickness = undef, roundingRad
       corner_r = roundExternal?roundingRadius:0)
   );
 }
+
+module __Demo() {
+  BoxWall(windowBezelThickness = 5);
+  translate([0,0,10])
+  PrettyBoxWall(windowBezelThickness = 5);
+}
+__Demo();
