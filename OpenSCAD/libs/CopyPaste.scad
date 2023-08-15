@@ -74,14 +74,16 @@ module translate_copy_z(offset, copy=true, condition=true) {
 }
 
 module CopyBetween(from, to, count, includeFrom = false, includeTo = false, skip=[]) {
-  CopyToPoints(PointsBetween(from, to, count,includeFrom,includeTo, skip))
+  let(points = PointsBetween(from, to, count,includeFrom,includeTo, skip))
+  CopyToPoints(points)
   children();
 }
 
 module CopyToPoints(points) {
-  for (p=points)
+  for (p = points) {
     translate(p)
     children();
+  }
 }
 
 use <dotSCAD/src/util/contains.scad>
