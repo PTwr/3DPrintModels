@@ -5,6 +5,7 @@ use <../libs/RoundedShapes.scad>
 use <../libs/PrettyWalls.scad>
 use <../libs/CopyPaste.scad>
 
+use <modules/floor.scad>
 
 /* [Presentation] */
 __DisplayRoof = true;
@@ -288,9 +289,6 @@ module Corner() {
   }
 }
 
-function TrapezoidTriangleLength(a,b) = (abs(a-b)/2);
-function TrapezoidSideLength(a,b,h) = sqrt(TrapezoidTriangleLength(a,b)^2+h^2);
-function TrapezoidSideAngle(a,b,h) = atan(h/ TrapezoidTriangleLength(a,b));
 
 module CardStack() {
   %cube(__CardStackSize, center=true);

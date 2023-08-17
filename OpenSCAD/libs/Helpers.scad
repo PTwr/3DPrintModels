@@ -1,3 +1,10 @@
+use <dotSCAD/src/util/find_index.scad>
+
+module Select(choices, choice) {  
+  let(i=find_index(choices,  function(e) e == choice))
+  children(i);
+}
+
 module UnionOrDiff(union) {
   union() {
     difference() {
@@ -21,6 +28,15 @@ module __Demo() {
   UnionOrDiff(union = false) {
     sphere(5);
     cube(5);
+  }
+  translate([20,0,0])
+  Select(["red","green","blue"], "green") {
+    color("red")
+    sphere(2.5);    
+    color("green")
+    sphere(2.5);
+    color("blue")    
+    sphere(2.5);
   }
 }
 %__Demo();

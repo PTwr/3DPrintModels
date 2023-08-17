@@ -5,7 +5,31 @@ use <CopyPaste.scad>
 use <dotSCAD/src/hollow_out.scad>
 use <dotSCAD/src/shape_trapezium.scad>
 
-module WithConnectorPegs() {
+module WithMagnetHoles(size, height, count, walllDimensions, shape = "circle", studsInsteadOfMagnets = false, bottom = false, condition = true) {
+  UnionOrDiff(union = studsInsteadOfMagnets) {
+    children();
+    if (condition) {
+      let(dim = RectDimensionsToTrapezoidDimensions(walllDimensions))
+      //position top or bottom
+      let(y = dim[2]/2)
+      let(y = bottom ? -y : y)
+      //select top or bottom edge
+      let(x = bottom ? dim[0] : dim[1])
+      let(x = x/2)
+      //hole needs to fit whole magnet
+      let(height=height*2)
+      //spread holes along edge
+      CopyBetween([-x,y,0], [x,y,0], count)
+      Select(["circle", "square"], shape) {
+        rotate([90,0,0])
+        cylinder(h = height,d = size, center = true, $fn = 20);
+        cube([size,height,size], center=true);
+      }
+    }
+  }
+}
+
+module WithConnectorPegs(hole = false) {
   //TODO implement construction pegs for printing vertical walls separately from bases
 }
 
@@ -17,27 +41,28 @@ module PartialWall(segmentLocation = [], withPegs = true) {
   //TODO implement segmented wall for smaller build plate, allowing for single-piece connection surfaces to vertical walls
 }
 
-module WithPressClip(dimensions, clipSizePercent = 0.8, clipCount = 3, clipShape = "ball", clipInset = 0.5, hole = false, condition = true) {
-  echo(dimensions);
-  let(dim = RectDimensionsToTrapezoidDimensions(dimensions))
-  let(
-    a = dim[0],
-    b = dim[1],
-    h = dim[2],
-    t = dim[3],
-    alpha = TrapezoidSideAngle(a, b, h),
-    d = TrapezoidTriangleLength(a, b),
-    c = TrapezoidSideLength(a,b,h),
-    clipOffset = [-(min(a,b)/2+d/2),0,0]
-  )
-  //fix angle for upside-down trapezoid
-  let(alpha= a >= b ? alpha : (180-alpha))
-  let(clipSize = t*clipSizePercent)
-  UnionOrDiff(union = !hole) {
-    children();
-    mirror_copy_x()
-    translate(clipOffset)
-    PressClip(c, alpha, clipSize, clipCount, clipShape, clipInset);
+module WithPressClip(dimensions, clipSizePercent = 0.3, clipCount = 3, clipShape = "ball", clipInset = 0.5, hole = false, condition = true) {
+  if (condition) {
+    let(dim = RectDimensionsToTrapezoidDimensions(dimensions))
+    let(
+      a = dim[0],
+      b = dim[1],
+      h = dim[2],
+      t = dim[3],
+      alpha = TrapezoidSideAngle(a, b, h),
+      d = TrapezoidTriangleLength(a, b),
+      c = TrapezoidSideLength(a,b,h),
+      clipOffset = [-(min(a,b)/2+d/2),0,0]
+    )
+    //fix angle for upside-down trapezoid
+    let(alpha= a >= b ? alpha : (180-alpha))
+    let(clipSize = t*clipSizePercent)
+    UnionOrDiff(union = !hole) {
+      children();
+      mirror_copy_x()
+      translate(clipOffset)
+      PressClip(c, alpha, clipSize, clipCount, clipShape, clipInset);
+    }
   }
 }
 
@@ -92,10 +117,12 @@ module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrude
 
 module __Demo() {
   let(dimensions = [80,60,50,5]) {
+    WithMagnetHoles(3,2,3, dimensions, shape="square", bottom=true)
     WithPressClip(dimensions, hole = true)
     BoxWall(dimensions = dimensions);
     
     translate([0,0,10])
+    WithMagnetHoles(3,2,3, dimensions, shape="circle")
     WithPressClip(dimensions, hole = false)
     PrettyBoxWall(dimensions = dimensions);
   }
