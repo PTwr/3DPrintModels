@@ -5,7 +5,63 @@ use <CopyPaste.scad>
 use <dotSCAD/src/hollow_out.scad>
 use <dotSCAD/src/shape_trapezium.scad>
 
+function GetTrapezoidCornersClockwise(dim) =
+let(
+  a = dim[0],
+  b = dim[1],
+  h = dim[2]
+)
+[
+  [a/2,h/2],
+  [b/2,-h/2],
+  [-b/2,-h/2],
+  [-a/2,h/2]
+];
+
+function GetTrapezoidWallVector(dim, bottom = false, left = false, right = false) =
+let(dim = RectDimensionsToTrapezoidDimensions(dim))
+let(
+  a = dim[0],
+  b = dim[1],
+  h = dim[2],
+  t = dim[3],
+  alpha = TrapezoidSideAngle(a, b, h),
+  d = TrapezoidTriangleLength(a, b)
+)
+let(isSide = left || right)
+let(x=(bottom?a:b)/2)
+let(y=bottom ? -h/2 : h/2)
+
+let(y=isSide ? 0 : y)
+[
+  [
+    -x,
+    y
+  ],
+  [
+    x,
+    y
+  ]
+];
+
 module WithMagnetHoles(diameter, height, count, walllDimensions, windowBezelThickness, shape = "cylinder", studsInsteadOfMagnets = false, bottom = false, left = false, right = false, cornerMargin = 0, insetPercent = -50, perpendicular = false, condition = true) {
+    
+  echo("------------------------");
+  let(dim = RectDimensionsToTrapezoidDimensions(walllDimensions))
+  echo(GetTrapezoidCornersClockwise(dim));
+  echo("------------------------");
+  let(dim = RectDimensionsToTrapezoidDimensions(walllDimensions)) {
+    echo(dim);
+    let(nn = GetTrapezoidWallVector(dim))
+    echo(nn);
+    let(nn = GetTrapezoidWallVector(dim, bottom = true))
+    echo(nn);
+    let(nn = GetTrapezoidWallVector(dim, left = true))
+    echo(nn);
+    let(nn = GetTrapezoidWallVector(dim, right = true))
+    echo(nn);
+  }
+  
   UnionOrDiff(union = studsInsteadOfMagnets) {
     children();
     if (condition) {
@@ -24,12 +80,12 @@ module WithMagnetHoles(diameter, height, count, walllDimensions, windowBezelThic
       let(inset = ((shape=="sphere"?diameter/2:height)*insetPercent/100))
       
       //position top or bottom
-      let(y = dim[2]/2)
+      let(y = h/2)
       let(y = y - (perpendicular ? (windowBezelThickness/2) : inset))
       let(y = bottom ? -y : y)
       
       //select top or bottom edge
-      let(x = bottom ? dim[0] : dim[1])
+      let(x = bottom ? b : a)
       //don't place holes on curved corners
       let(x = x/2 - cornerMargin)
       let(z = perpendicular ? -inset : 0)
@@ -37,7 +93,7 @@ module WithMagnetHoles(diameter, height, count, walllDimensions, windowBezelThic
       //hole needs to fit whole magnet
       let(height=height*2)      
             
-      translate([0,0,perpendicular ? dim[3]/2 : 0])
+      translate([0,0,perpendicular ? t/2 : 0])
       //spread holes along edge
       CopyBetween([-x,y,z], [x,y,z], count)
       rotate([perpendicular?90:0,0,0])
@@ -74,7 +130,7 @@ module WithPressClip(dimensions, clipSizePercent = 0.3, clipCount = 3, clipShape
       alpha = TrapezoidSideAngle(a, b, h),
       d = TrapezoidTriangleLength(a, b),
       c = TrapezoidSideLength(a,b,h),
-      clipOffset = [-(min(a,b)/2+d/2),0,0]
+      clipOffset = [(min(a,b)/2+d/2),0,0]
     )
     //fix angle for upside-down trapezoid
     let(alpha= a >= b ? alpha : (180-alpha))
@@ -98,6 +154,16 @@ module PressClip(length, angle, size, count, shape = "ball", inset = 0.5) {
 }
 
 module PrettyBoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 5, slopedBezel = true, roundExternal=true, roundInternal=true) {
+  let(dim = RectDimensionsToTrapezoidDimensions(dimensions))
+  let(
+    a = dim[0],
+    b = dim[1],
+    h = dim[2],
+    t = dim[3]
+  )
+  let(
+    x=max(a,b)
+  )
   union() {
     BoxWall(
       dimensions = dimensions, 
@@ -108,7 +174,7 @@ module PrettyBoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 5, s
     
     if (slopedBezel) {      
       let(dim=RectDimensionsToTrapezoidDimensions(dimensions))
-      let(scale=[(dim[0]-windowBezelThickness)/dim[0],(dim[2]-windowBezelThickness)/dim[2]])
+      let(scale=[(x-windowBezelThickness)/x,(h-windowBezelThickness)/h])
       {
         BoxWall(dimensions, windowBezelThickness/2, roundingRadius, scale, roundExternal, roundInternal);
       }      
@@ -132,7 +198,7 @@ module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrude
   round_internal(cornerRadiusInternal)
   hollow_out(shell_thickness) 
   polygon(
-      shape_trapezium([a, b], 
+      shape_trapezium([b, a], 
       h = h,
       corner_r = cornerRadiusExternal)
   );
@@ -140,7 +206,7 @@ module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrude
 
 module __Demo() {
   let(windowBezelThickness=5)
-  let(dimensions = [80,60,50,5]) {
+  let(dimensions = [60,80,50,5]) {
     WithMagnetHoles(3,2,3, dimensions, shape="cube", bottom=true)
     WithPressClip(dimensions, hole = true)
     BoxWall(dimensions = dimensions, windowBezelThickness = windowBezelThickness);
