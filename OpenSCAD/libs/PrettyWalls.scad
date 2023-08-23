@@ -10,6 +10,7 @@ module WithConnectors(diameter, count, trapezoidDimensions, height = undef, beze
   let(height = height == undef ? diameter : height)
   UnionOrDiff(union = !void) {
     children();
+    
     if (condition) {      
       let(dim = RectDimensionsToTrapezoidDimensions(trapezoidDimensions))
       let(
@@ -19,48 +20,48 @@ module WithConnectors(diameter, count, trapezoidDimensions, height = undef, beze
         t = dim[3],
         alpha = TrapezoidSideAngle(a, b, h)
       )
+      //sphere doesn't use height param
       let(inset = ((shape=="sphere"?diameter/2:height)*insetPercent/100))
+      
       // hole needs to fit whole magnet
       let(height=height*2) 
+      
       // perpendicular holes needs som extra handling
       let(perpendicular=perpendicularInner || perpendicularOuter)
       let(inPlaneInset = perpendicular ? (bezelThickness/2) : inset)
       translate([0,0,perpendicular ? ((perpendicularInner?t/2-inset:0) - (perpendicularOuter?t/2-inset:0)) : 0])
-//      let(zOffset = perpendicular ? t/2 - inset : 0)
+            
       let(insetVectorLR = [[inPlaneInset,0,0],[inPlaneInset,0,0]])
       let(insetVectorTB = [[0,inPlaneInset,0],[0,inPlaneInset,0]])
       // conditionally render connector pegs/holes on all sides
-      union()
-      {
-        //TODO inset
-        //TODO translate perpendicular
+      union() {
         //spread holes along edge
         if (left) {
           let(vector = GetTrapezoidLeftEdgeVector(dim))
           let(vector = vector + insetVectorLR)
-          _Connectors(diameter, height, count, vector, margin, perpendicular, alpha, shape, void);
+          Connectors(diameter, height, count, vector, margin, perpendicular, alpha, shape, void);
         }
         if (right) {
           let(vector = GetTrapezoidRightEdgeVector(dim))
           let(vector = vector - insetVectorLR)
-          _Connectors(diameter, height, count, vector, margin, perpendicular, -alpha, shape, void);
+          Connectors(diameter, height, count, vector, margin, perpendicular, -alpha, shape, void);
         }
         if (top) {
           let(vector = GetTrapezoidTopEdgeVector(dim))
           let(vector = vector - insetVectorTB)
-          _Connectors(diameter, height, count, vector, margin, perpendicular, 0, shape, void);
+          Connectors(diameter, height, count, vector, margin, perpendicular, 0, shape, void);
         }
         if (bottom) {
           let(vector = GetTrapezoidBottomEdgeVector(dim))
           let(vector = vector + insetVectorTB)
-          _Connectors(diameter, height, count, vector, margin, perpendicular, 0, shape, void);
+          Connectors(diameter, height, count, vector, margin, perpendicular, 0, shape, void);
         }
       }
     }
   }
 }
 
-module _Connectors(diameter, height, count, vector, margin, perpendicular, alpha, shape, void) {
+module Connectors(diameter, height, count, vector, margin, perpendicular, alpha, shape, void) {
   CopyBetween(vector[0], vector[1], count, margin = margin)
   rotate([0,0,alpha])
   rotate([perpendicular?90:0,0,0])
@@ -143,4 +144,4 @@ module __Demo() {
     PrettyBoxWall(dimensions = dimensions, windowBezelThickness = windowBezelThickness*2);
   }
 }
-__Demo();
+%__Demo();
