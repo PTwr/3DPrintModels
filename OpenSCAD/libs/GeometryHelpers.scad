@@ -18,10 +18,10 @@ let(
   h = dim[2]
 )
 [
-  [a/2,h/2],
-  [b/2,-h/2],
-  [-b/2,-h/2],
-  [-a/2,h/2]
+  [a/2,h/2,0],
+  [b/2,-h/2,0],
+  [-b/2,-h/2,0],
+  [-a/2,h/2,0]
 ];
 
 function GetTrapezoidRightEdgeVector(dim) =
