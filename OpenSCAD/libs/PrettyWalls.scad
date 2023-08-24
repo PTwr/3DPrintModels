@@ -80,7 +80,7 @@ module Connectors(diameter, height, count, vector, margin, perpendicular, alpha,
   }
 }
 
-module PrettyBoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 5, slopedBezel = true, roundExternal=true, roundInternal=true) {
+module PrettyBoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 5, slopedBezel = true, roundExternal=true, roundInternal=true, window = true) {
   let(dim = RectDimensionsToTrapezoidDimensions(dimensions))
   let(
     a = dim[0],
@@ -103,13 +103,13 @@ module PrettyBoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 5, s
       let(dim=RectDimensionsToTrapezoidDimensions(dimensions))
       let(scale=[(x-windowBezelThickness)/x,(h-windowBezelThickness)/h])
       {
-        BoxWall(dimensions, windowBezelThickness/2, roundingRadius, scale, roundExternal, roundInternal);
+        BoxWall(dimensions, windowBezelThickness/2, roundingRadius, scale, roundExternal, roundInternal, window);
       }      
     }
   }
 }
 
-module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrudeScale = [1,1], roundExternal = true, roundInternal = true) {
+module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrudeScale = [1,1], roundExternal = true, roundInternal = true, window = true) {
   let(extrudeConvexity = 10) //fix linear_extrude transparency bug https://github.com/openscad/openscad/issues/3903
   let(dim = RectDimensionsToTrapezoidDimensions(dimensions))
   let(
@@ -118,9 +118,9 @@ module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrude
     h = dim[2],
     t = dim[3]
   )
-  let(shell_thickness = windowBezelThickness == undef ? max(dimensions) : windowBezelThickness)
+  let(shell_thickness = window == undef ? max(dimensions) : windowBezelThickness)
   let(cornerRadiusExternal = roundExternal ? roundingRadius : 0)
-  let(cornerRadiusInternal = roundExternal ? roundingRadius : 0)
+  let(cornerRadiusInternal = roundInternal ? roundingRadius : 0)
   linear_extrude(t, center = true, scale = extrudeScale, convexity = extrudeConvexity)
   round_internal(cornerRadiusInternal)
   hollow_out(shell_thickness) 
