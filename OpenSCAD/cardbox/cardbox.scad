@@ -24,6 +24,7 @@ __ExplodeWallsAndSurfaces = 0; //[0:100]
 /* [Size] */
 __CardStackDimensions = [88,63.5,50]; //CCG
 __WallThickness = 5;
+__WallFrameThickness = 5;
 __RoundingRadius = 5;
 //How much of shorter side will corner take in %
 __CornerPercentUpper = 20; //[0:100]
@@ -78,7 +79,7 @@ module Wall(dim, offset, mirror) {
   translate([0,offset/2-__WallThickness/2,0])
   rotate([90,0,0])
   WithConnectors(diameter = __WallThickness*__BallClipSizePercent/100, count=__BallClipCount, trapezoidDimensions=dim, shape="sphere", right=true, left=true, condition = __BallClipEnabled, void=false, insetPercent = __BallClipInset)
-  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed, roundExternal = false);
+  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = __RoundingRadius, window = __Windowed, roundExternal = false);
 }
 
 //TODO corners
