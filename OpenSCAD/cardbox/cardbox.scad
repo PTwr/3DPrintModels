@@ -16,6 +16,7 @@ __DisplayXWall = true;
 __DisplayBothXWalls = true;
 __DisplayYWall = true;
 __DisplayBothYWalls = true;
+__DisplayCorners = true;
 __DisplayAllCorners = true;
 
 /* [Explode view] */
@@ -70,34 +71,47 @@ function RoundingRadiusY() = min(floorDim().x, floorDim().y)*__RoundingRadiusPer
 function RoundingRadiusC() = min(floorDim().x, floorDim().y)*__RoundingRadiusPercentC/100;
 function RoundingRadiusZ() = min(floorDim().x, floorDim().y)*__RoundingRadiusPercentZ/100;
 
-if (__DisplayFloor) {
-  let(dim = floorDim())
-  translate([0,0,-wallAndSurfaceDistance()])
-  WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
-  WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
-  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
+module Cardbox() {
+  LowerHalf();
+  UpperHalf();
 }
 
-//explode upper and lower lid
-translate([0,0,upperAndLowerSurfacesDistance()]) {
-  if (__DisplayRoof) {
-    //explode walls from lid
-    translate([0,0,wallAndSurfaceDistance()])
-    rotate([180,0,0])
-    PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);    
+module LowerHalf() {
+  if (__DisplayFloor) {
+    let(dim = floorDim())
+    translate([0,0,-wallAndSurfaceDistance()])
+    WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
+    WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
+    PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
   }
   
-  //match Z with surfaces
-  translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2])
-  if (__DisplayWalls) {
-    if (__DisplayXWall) {
-      Wall(xDim(), floorDim()[2], __DisplayBothXWalls, RoundingRadiusX(), __MagnetCountX);
+  if (__DisplayCorners) {
+    Corners();
+  }
+}
+
+module UpperHalf() {
+  //explode upper and lower lid
+  translate([0,0,upperAndLowerSurfacesDistance()]) {
+    if (__DisplayRoof) {
+      //explode walls from lid
+      translate([0,0,wallAndSurfaceDistance()])
+      rotate([180,0,0])
+      PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);    
     }
     
-    if (__DisplayYWall) {
-      rotate([0,0,90])
-      Wall(yDim(), floorDim()[0], __DisplayBothYWalls, RoundingRadiusY(), __MagnetCountY); 
-    } 
+    //match Z with surfaces
+    translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2])
+    if (__DisplayWalls) {
+      if (__DisplayXWall) {
+        Wall(xDim(), floorDim()[2], __DisplayBothXWalls, RoundingRadiusX(), __MagnetCountX);
+      }
+      
+      if (__DisplayYWall) {
+        rotate([0,0,90])
+        Wall(yDim(), floorDim()[0], __DisplayBothYWalls, RoundingRadiusY(), __MagnetCountY); 
+      } 
+    }
   }
 }
 
@@ -112,22 +126,20 @@ module Wall(dim, offset, mirror, roundingRadius, magnetCount) {
   PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = roundingRadius, window = __Windowed, roundExternal = false);
 }
 
-//TODO corners
-//TODO corner connector positioning
-//TODO construction studs
-
-//populte other corners
-mirror_copy_y(condition = __DisplayAllCorners)
-mirror_copy_x(condition = __DisplayAllCorners)
-//match display of single walls
-mirror([1,0,0])
-//move to corner of floor
-translate([floorDim()[0]/2,floorDim()[2]/2,0])
-//put corner at [0,0]
-translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
-//Z position to match lids
-translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
-Corner();
+module Corners() {
+  //populte other corners
+  mirror_copy_y(condition = __DisplayAllCorners)
+  mirror_copy_x(condition = __DisplayAllCorners)
+  //match display of single walls
+  mirror([1,0,0])
+  //move to corner of floor
+  translate([floorDim()[0]/2,floorDim()[2]/2,0])
+  //put corner at [0,0]
+  translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
+  //Z position to match lids
+  translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
+  Corner();
+}
 
 module Corner() {
   //corner width without bend
@@ -147,3 +159,8 @@ module Corner() {
     PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = RoundingRadiusC(), window = __Windowed, roundExternal = false);
   }
 }
+
+//TODO corners
+//TODO corner connector positioning
+//TODO construction studs
+Cardbox();
