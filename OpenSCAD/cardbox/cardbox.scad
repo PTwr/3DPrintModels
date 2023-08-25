@@ -25,7 +25,6 @@ __ExplodeWallsAndSurfaces = 0; //[0:100]
 __CardStackDimensions = [88,63.5,50]; //CCG
 __WallThickness = 5;
 __WallFrameThickness = 5;
-__RoundingRadius = 5;
 //How much of shorter side will corner take in %
 __CornerPercentUpper = 20; //[0:100]
 //How much of shorter side will corner take in %
@@ -33,6 +32,10 @@ __CornerPercentLower = 30; //[0:100]
 
 /* [Eye candy] */
 __Windowed = true;
+//% of shorter side that will be rounded
+__RoundingRadiusPercentX = 5; //[0:20]
+__RoundingRadiusPercentY = 5; //[0:20]
+__RoundingRadiusPercentZ = 15; //[0:20]
 
 /* [Ball clip] */
 __BallClipEnabled = true;
@@ -58,12 +61,16 @@ function yDim() = [__CardStackDimensions.y-cornerUpperWidth()*2, __CardStackDime
 function upperAndLowerSurfacesDistance() = __CardStackDimensions.z * __ExplodeUpperAndLower/100 + __WallThickness;
 function wallAndSurfaceDistance() = __CardStackDimensions.z * __ExplodeWallsAndSurfaces/100;
 
+function RoundingRadiusX() = min(floorDim().x, floorDim().y)*__RoundingRadiusPercentX/100;
+function RoundingRadiusY() = min(floorDim().x, floorDim().y)*__RoundingRadiusPercentY/100;
+function RoundingRadiusZ() = min(floorDim().x, floorDim().y)*__RoundingRadiusPercentZ/100;
+
 if (__DisplayFloor) {
   let(dim = floorDim())
   translate([0,0,-wallAndSurfaceDistance()])
   WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
   WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
-  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);
+  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
 }
 
 //explode upper and lower lid
@@ -72,33 +79,37 @@ translate([0,0,upperAndLowerSurfacesDistance()]) {
     //explode walls from lid
     translate([0,0,wallAndSurfaceDistance()])
     rotate([180,0,0])
-    PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);    
+    PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);    
   }
   
   //match Z with surfaces
   translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2])
   if (__DisplayWalls) {
     if (__DisplayXWall) {
-      Wall(xDim(), __CardStackDimensions.y, __DisplayBothXWalls, __MagnetCountX);
+      Wall(xDim(), __CardStackDimensions.y, __DisplayBothXWalls, RoundingRadiusX(), __MagnetCountX);
     }
     
     if (__DisplayYWall) {
       rotate([0,0,90])
-      Wall(yDim(), __CardStackDimensions.x, __DisplayBothYWalls, __MagnetCountY); 
+      Wall(yDim(), __CardStackDimensions.x, __DisplayBothYWalls, RoundingRadiusY(), __MagnetCountY); 
     } 
   }
 }
 
-module Wall(dim, offset, mirror, magnetCount) {
+module Wall(dim, offset, mirror, roundingRadius, magnetCount) {
   mirror_copy_y(condition = mirror)
   translate([0,offset/2-__WallThickness/2,0])
   rotate([90,0,0])
   WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=magnetCount, trapezoidDimensions=dim, shape=__MagnetShape, bottom=true, condition = __MagnetsEnabled)
   WithConnectors(diameter = __WallThickness*__BallClipSizePercent/100, count=__BallClipCount, trapezoidDimensions=dim, shape="sphere", right=true, left=true, condition = __BallClipEnabled, void=false, insetPercent = __BallClipInset)
-  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = __RoundingRadius, window = __Windowed, roundExternal = false);
+  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = roundingRadius, window = __Windowed, roundExternal = false);
 }
 
 //TODO corners
 //TODO corner connector positioning
-//TODO lid magnets
 //TODO construction studs
+
+module Corner() {
+  let(bendLength = PI*RoundingRadius()/2)
+  cube(1);
+}
