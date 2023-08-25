@@ -91,22 +91,38 @@ function PointsBetween(from, to, count, includeFrom = false, includeTo = false, 
   let(lv = to-from) //length vector
   let(length = sqrt(lv.x*lv.x + lv.y*lv.y + lv.z+lv.z))
 
-  //shorten vector by margins
+  //start from margin
   let(offset = lv*(margin/length))
+  //shorten vector by margins
   let(lv=lv-offset-offset)
   
   let(c=count-(includeFrom?1:0)-(includeTo?1:0))
   let(dV=lv/(c+1))
-  let(from=from)
 
   [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
     if (contains(skip,n)==false)
       from+dV*n+offset
   ];
     
+function PointsOnArc(wingLength, bendRadius, count, includeFrom = false, includeTo = false, skip=[], margin = 0) =
+  let(bendLength = 2*Pi*bendRadius/4) //quarter of circle
+  let(length = wingLength + bendRadius) //total length
+  let(c=count-(includeFrom?1:0)-(includeTo?1:0)+1) //segment count
+  let(dL = length/c)
+  concat(
+    //left wing
+//    [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
+//      if (contains(skip,n)==false)
+//        from+dV*n+offset
+//    ]
+    //bend
+    //right wing
+    );
+    
 module __Demo() {
-  echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=true, includeTo=true));
+  echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=false, includeTo=false));
   echo(PointsBetween([0,0,0],[10,0,0],5, includeFrom=true, includeTo=true, margin = 1));
   echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=true, includeTo=true, margin = 1));
+  
 }
 %__Demo();
