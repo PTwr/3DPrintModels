@@ -34,11 +34,19 @@ __CornerPercentLower = 30; //[0:100]
 /* [Eye candy] */
 __Windowed = true;
 
-/* [Connectors] */
+/* [Ball clip] */
 __BallClipEnabled = true;
 __BallClipSizePercent = 20; //[0:100]
 __BallClipCount = 3;
 __BallClipInset = 50; //[-100:100]
+
+/* [Magnets] */
+__MagnetsEnabled = true;
+__MagnetCountX = 3;
+__MagnetCountY = 2;
+__MagnetDiameter = 3;
+__MagnetHeight = 2;
+__MagnetShape = "cylinder"; //[cylinder, cube]
 
 function floorDim() = [__CardStackDimensions.x, __CardStackDimensions.x, __CardStackDimensions.y, __WallThickness];
 function shorterSide() = min(__CardStackDimensions.x, __CardStackDimensions.y);
@@ -51,33 +59,41 @@ function upperAndLowerSurfacesDistance() = __CardStackDimensions.z * __ExplodeUp
 function wallAndSurfaceDistance() = __CardStackDimensions.z * __ExplodeWallsAndSurfaces/100;
 
 if (__DisplayFloor) {
+  let(dim = floorDim())
   translate([0,0,-wallAndSurfaceDistance()])
-  PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);
+  WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
+  WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
+  PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);
 }
 
-translate([0,0,upperAndLowerSurfacesDistance()])
-if (__DisplayRoof) {
-  translate([0,0,wallAndSurfaceDistance()])
-  rotate([180,0,0])
-  PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);
+//explode upper and lower lid
+translate([0,0,upperAndLowerSurfacesDistance()]) {
+  if (__DisplayRoof) {
+    //explode walls from lid
+    translate([0,0,wallAndSurfaceDistance()])
+    rotate([180,0,0])
+    PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = __RoundingRadius, window = __Windowed);    
+  }
   
-  translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2]) //centering
+  //match Z with surfaces
+  translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2])
   if (__DisplayWalls) {
     if (__DisplayXWall) {
-      Wall(xDim(), __CardStackDimensions.y, __DisplayBothXWalls);
+      Wall(xDim(), __CardStackDimensions.y, __DisplayBothXWalls, __MagnetCountX);
     }
     
     if (__DisplayYWall) {
       rotate([0,0,90])
-      Wall(yDim(), __CardStackDimensions.x, __DisplayBothYWalls); 
+      Wall(yDim(), __CardStackDimensions.x, __DisplayBothYWalls, __MagnetCountY); 
     } 
   }
 }
 
-module Wall(dim, offset, mirror) {
+module Wall(dim, offset, mirror, magnetCount) {
   mirror_copy_y(condition = mirror)
   translate([0,offset/2-__WallThickness/2,0])
   rotate([90,0,0])
+  WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=magnetCount, trapezoidDimensions=dim, shape=__MagnetShape, bottom=true, condition = __MagnetsEnabled)
   WithConnectors(diameter = __WallThickness*__BallClipSizePercent/100, count=__BallClipCount, trapezoidDimensions=dim, shape="sphere", right=true, left=true, condition = __BallClipEnabled, void=false, insetPercent = __BallClipInset)
   PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = __RoundingRadius, window = __Windowed, roundExternal = false);
 }
