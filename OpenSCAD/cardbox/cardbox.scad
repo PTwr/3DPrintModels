@@ -5,6 +5,7 @@ use <../libs/RoundedShapes.scad>
 use <../libs/PrettyWalls.scad>
 use <../libs/CopyPaste.scad>
 use <../libs/BendShapes.scad>
+use <../libs/dotSCAD/src/part/connector_peg.scad>
 
 //use <modules/floor.scad>
 
@@ -21,7 +22,7 @@ __DisplayAllCorners = false;
 
 /* [Explode view] */
 __ExplodeUpperAndLower = 100; //[100:300]
-__ExplodeWallsAndSurfaces = 50; //[0:100]
+__ExplodeWallsAndSurfaces = 20; //[0:100]
 
 
 /* [Size] */
@@ -90,7 +91,10 @@ module LowerHalf() {
     translate([0,0,-wallAndSurfaceDistance()])
     WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
     WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
-    PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
+    difference() {
+      PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
+      CornerPegHoles();
+    }
   }
   
   if (__DisplayCorners) {
@@ -134,6 +138,8 @@ module Wall(dim, offset, mirror, roundingRadius, magnetCount) {
   PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = roundingRadius, window = __Windowed, roundExternal = false);
 }
 
+
+
 module Corners() {
   //populte other corners
   mirror_copy_y(condition = __DisplayAllCorners)
@@ -142,23 +148,49 @@ module Corners() {
   mirror([1,0,0])
   //move to corner of floor
   translate([floorDim()[0]/2,floorDim()[2]/2,0])
-  //put corner at [0,0]
-  translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
-  //Z position to match lids
-  translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
   union() {
+    //put corner at [0,0]
+    translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
+    //Z position to match lids
+    translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
     Corner();
+    
     CornerPegs();
   }
 }
 
-module CornerPegs() {
+module CornerPegHoles() {
+  //populte other corners
+  mirror_copy_y()
+  mirror_copy_x()
+  //match display of single walls
+  mirror([1,0,0])
+  //move to corner of floor
+  translate([floorDim()[0]/2,floorDim()[2]/2,0])
+  CornerPegs(void=true);
+}
+
+module CornerPegs(void = false) {
   if (__PegsEnabled) {
+    //put in center of wall instead of outer edge
+    translate([-__WallThickness/2,-__WallThickness/2,0])
+    //put on top of floor
+    translate([0,0,__WallThickness/2])
+    //match first corner rotation
+    rotate([0,0,270])
+    //radius to center of wall instead of outer edge
+    let(radius = RoundingRadiusZ()-__WallThickness/2)
     let(cornerWingLengthLower = cornerLowerWidth() - RoundingRadiusZ())
-    let(arc = PointsOnArc(cornerWingLengthLower, RoundingRadiusZ(), __PegsPerCorner*100, false, false))
+    translate([0,-cornerWingLengthLower-radius,0])
+    let(arc = PointsOnArc(cornerWingLengthLower, radius, __PegsPerCorner, false, false))
     for(p = arc) {
       translate(p)
-      cube(1, center = true);
+      rotate([180,0,0])
+      connector_peg(
+        radius = __WallThickness*__PegSize/100/2,
+        height = __WallThickness*__PegSize/100,
+        void = void,
+        $fn=20);
     }
   }
 }
