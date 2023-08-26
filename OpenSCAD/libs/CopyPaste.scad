@@ -143,14 +143,10 @@ module __Demo() {
   echo(PointsBetween([0,0,0],[10,0,0],5, includeFrom=true, includeTo=true, margin = 1));
   echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=true, includeTo=true, margin = 1));
   let(arc=PointsOnArc(20,10,100, true, true)) {
-    echo("-------------------------");
-    echo(arc);
-    let(arc= VecListTranform(arc))
-    echo(arc);
     let(arc= VecListTranform(arc, mul =[-1,1,1], sum=[0,10,10]))
     for(p=arc) {
       translate([p.x,p.y,p.z])
-      cube(size=0.5, center=true);
+      cube(size=1, center=true);
     }
   }
 }

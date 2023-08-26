@@ -9,19 +9,19 @@ use <../libs/BendShapes.scad>
 //use <modules/floor.scad>
 
 /* [Parts] */
-__DisplayRoof = true;
+__DisplayRoof = false;
 __DisplayFloor = true;
-__DisplayWalls = true;
+__DisplayWalls = false;
 __DisplayXWall = true;
 __DisplayBothXWalls = true;
 __DisplayYWall = true;
 __DisplayBothYWalls = true;
 __DisplayCorners = true;
-__DisplayAllCorners = true;
+__DisplayAllCorners = false;
 
 /* [Explode view] */
 __ExplodeUpperAndLower = 100; //[100:300]
-__ExplodeWallsAndSurfaces = 0; //[0:100]
+__ExplodeWallsAndSurfaces = 50; //[0:100]
 
 
 /* [Size] */
@@ -54,6 +54,14 @@ __MagnetCountY = 2;
 __MagnetDiameter = 3;
 __MagnetHeight = 2;
 __MagnetShape = "cylinder"; //[cylinder, cube]
+
+/* [Construction pegs] */
+__PegsEnabled = true;
+__PegsPerCorner = 3;
+__PegsPerWallX = 3;
+__PegsPerWallY = 3;
+__PegSize = 50; //[0:100]
+__PegHeight = 50; //[0:100]
 
 function floorDim() = [__CardStackDimensions.x + __WallThickness*2, __CardStackDimensions.x + __WallThickness*2, __CardStackDimensions.y + __WallThickness*2, __WallThickness];
 function shorterSide() = min(floorDim()[0], floorDim()[2]);
@@ -138,7 +146,21 @@ module Corners() {
   translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
   //Z position to match lids
   translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
-  Corner();
+  union() {
+    Corner();
+    CornerPegs();
+  }
+}
+
+module CornerPegs() {
+  if (__PegsEnabled) {
+    let(cornerWingLengthLower = cornerLowerWidth() - RoundingRadiusZ())
+    let(arc = PointsOnArc(cornerWingLengthLower, RoundingRadiusZ(), __PegsPerCorner*100, false, false))
+    for(p = arc) {
+      translate(p)
+      cube(1, center = true);
+    }
+  }
 }
 
 module Corner() {
@@ -160,7 +182,5 @@ module Corner() {
   }
 }
 
-//TODO corners
-//TODO corner connector positioning
 //TODO construction studs
 Cardbox();
