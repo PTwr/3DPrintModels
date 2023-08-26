@@ -104,25 +104,54 @@ function PointsBetween(from, to, count, includeFrom = false, includeTo = false, 
       from+dV*n+offset
   ];
     
+//TODO from/to points
+//TODO any angle
+//TODO 3D
 function PointsOnArc(wingLength, bendRadius, count, includeFrom = false, includeTo = false, skip=[], margin = 0) =
-  let(bendLength = 2*Pi*bendRadius/4) //quarter of circle
-  let(length = wingLength + bendRadius) //total length
-  let(c=count-(includeFrom?1:0)-(includeTo?1:0)+1) //segment count
-  let(dL = length/c)
+  let(bendLength = 2*PI*bendRadius/4) //quarter of circle
+  let(length = wingLength*2 + bendLength) //total length
+  let(c=count-(includeFrom?1:0)-(includeTo?1:0)) //point count
+  let(dL = length/(c+1)) 
   concat(
     //left wing
-//    [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
-//      if (contains(skip,n)==false)
-//        from+dV*n+offset
-//    ]
-    //bend
-    //right wing
+    [for(n = [(includeFrom?0:1):(includeTo?c+1:c)])
+      let(lPos = dL*n)
+      //right wing
+      if (lPos >= wingLength+bendLength)
+        [lPos,0, 0] + [0, wingLength+bendRadius,0] + [-wingLength-bendLength+bendRadius,0,0]
+      //bend arc
+      else if (lPos > wingLength)
+        let(bp = (lPos-wingLength)/bendLength)
+        //90degree bend
+        let(alpha=270+90*bp)
+        let(x=bendRadius+bendRadius*sin(alpha))
+        let(y=bendRadius*cos(alpha))
+        [0, wingLength, 0] + [x,y,0]
+      //left wing
+      else 
+        [0, lPos, 0]
+    ]
     );
     
+function VecListTranform(vec, mul=[1,1,1], sum=[0,0,0]) = 
+  [for (v = vec)
+    [v.x*mul.x, v.y*mul.y, v.z*mul.z]+sum
+  ];
+
 module __Demo() {
   echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=false, includeTo=false));
   echo(PointsBetween([0,0,0],[10,0,0],5, includeFrom=true, includeTo=true, margin = 1));
   echo(PointsBetween([0,0,0],[10,10,10],5, includeFrom=true, includeTo=true, margin = 1));
-  
+  let(arc=PointsOnArc(20,10,100, true, true)) {
+    echo("-------------------------");
+    echo(arc);
+    let(arc= VecListTranform(arc))
+    echo(arc);
+    let(arc= VecListTranform(arc, mul =[-1,1,1], sum=[0,10,10]))
+    for(p=arc) {
+      translate([p.x,p.y,p.z])
+      cube(size=0.5, center=true);
+    }
+  }
 }
 %__Demo();
