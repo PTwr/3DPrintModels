@@ -10,18 +10,18 @@ use <../libs/dotSCAD/src/part/connector_peg.scad>
 //use <modules/floor.scad>
 
 /* [Parts] */
-__DisplayRoof = false;
+__DisplayRoof = true;
 __DisplayFloor = true;
-__DisplayWalls = false;
+__DisplayWalls = true;
 __DisplayXWall = true;
 __DisplayBothXWalls = true;
 __DisplayYWall = true;
 __DisplayBothYWalls = true;
 __DisplayCorners = true;
-__DisplayAllCorners = false;
+__DisplayAllCorners = true;
 
 /* [Explode view] */
-__ExplodeUpperAndLower = 100; //[100:300]
+__ExplodeUpperAndLower = 150; //[100:300]
 __ExplodeWallsAndSurfaces = 20; //[0:100]
 
 
@@ -89,10 +89,13 @@ module LowerHalf() {
   if (__DisplayFloor) {
     let(dim = floorDim())
     translate([0,0,-wallAndSurfaceDistance()])
+    //magnets Y
     WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
+    //magnets X
     WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountX, trapezoidDimensions=dim, shape=__MagnetShape, top=true, bottom=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
     difference() {
       PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);
+      //subastract construcion peg holes
       CornerPegHoles();
     }
   }
@@ -108,29 +111,40 @@ module UpperHalf() {
     if (__DisplayRoof) {
       //explode walls from lid
       translate([0,0,wallAndSurfaceDistance()])
+      //face outwards
       rotate([180,0,0])
-      PrettyBoxWall(dimensions = floorDim(), windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);    
+      let(dim=floorDim())
+      //construction pegs X
+      WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=__PegsPerWallX, trapezoidDimensions=dim, shape="peg", top=true, bottom=true, condition = __PegsEnabled, void=true, margin=cornerUpperWidth(), perpendicularInner=true, bezelThickness = __WallThickness)
+      //construction pegs Y
+      WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=__PegsPerWallY, trapezoidDimensions=dim, shape="peg", left=true, right=true, condition = __PegsEnabled, void=true, margin=cornerUpperWidth(), perpendicularInner=true, bezelThickness = __WallThickness)
+      //box wall
+      PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallThickness*2, roundingRadius = RoundingRadiusZ(), window = __Windowed);    
     }
     
     //match Z with surfaces
     translate([0,0,-__CardStackDimensions.z/2 - __WallThickness/2])
     if (__DisplayWalls) {
       if (__DisplayXWall) {
-        Wall(xDim(), floorDim()[2], __DisplayBothXWalls, RoundingRadiusX(), __MagnetCountX);
+        Wall(xDim(), floorDim()[2], __DisplayBothXWalls, RoundingRadiusX(), __MagnetCountX, __PegsPerWallX);
       }
       
       if (__DisplayYWall) {
         rotate([0,0,90])
-        Wall(yDim(), floorDim()[0], __DisplayBothYWalls, RoundingRadiusY(), __MagnetCountY); 
+        Wall(yDim(), floorDim()[0], __DisplayBothYWalls, RoundingRadiusY(), __MagnetCountY, __PegsPerWallY); 
       } 
     }
   }
 }
 
-module Wall(dim, offset, mirror, roundingRadius, magnetCount) {
+module Wall(dim, offset, mirror, roundingRadius, magnetCount, pegCount) {
   mirror_copy_y(condition = mirror)
+  //position on box edge
   translate([0,offset/2-__WallThickness/2,0])
+  //vertical
   rotate([90,0,0])
+  //construction pegs
+  WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=pegCount, trapezoidDimensions=dim, shape="peg", top=true, condition = __PegsEnabled, void=false)
   //magnets
   WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=magnetCount, trapezoidDimensions=dim, shape=__MagnetShape, bottom=true, condition = __MagnetsEnabled)
   //ball clip
@@ -138,9 +152,9 @@ module Wall(dim, offset, mirror, roundingRadius, magnetCount) {
   PrettyBoxWall(dimensions = dim, windowBezelThickness = __WallFrameThickness, roundingRadius = roundingRadius, window = __Windowed, roundExternal = false);
 }
 
-
-
 module Corners() {
+  
+//render separately from bent corner to slim down render time  
   //populte other corners
   mirror_copy_y(condition = __DisplayAllCorners)
   mirror_copy_x(condition = __DisplayAllCorners)
@@ -170,6 +184,8 @@ module CornerPegHoles() {
   CornerPegs(void=true);
 }
 
+
+//render separately from bent corner to slim down render time  
 module CornerPegs(void = false) {
   if (__PegsEnabled) {
     //put in center of wall instead of outer edge
@@ -180,11 +196,14 @@ module CornerPegs(void = false) {
     rotate([0,0,270])
     //radius to center of wall instead of outer edge
     let(radius = RoundingRadiusZ()-__WallThickness/2)
+    //centered wing length is same as edge, only bend length changes
     let(cornerWingLengthLower = cornerLowerWidth() - RoundingRadiusZ())
+    //align with corner
     translate([0,-cornerWingLengthLower-radius,0])
     let(arc = PointsOnArc(cornerWingLengthLower, radius, __PegsPerCorner, false, false))
     for(p = arc) {
       translate(p)
+      //down facing
       rotate([180,0,0])
       connector_peg(
         radius = __WallThickness*__PegSize/100/2,
@@ -201,12 +220,7 @@ module Corner() {
   let(cornerWingLengthLower = cornerLowerWidth() - RoundingRadiusZ())
   let(bendLength = PI*RoundingRadiusZ()/2)
   let(dim = [bendLength + cornerWingLengthUpper*2, bendLength + cornerWingLengthLower*2, __CardStackDimensions.z, __WallThickness])
-  let(bendH = dim.z) // TODO + peg height
-  {
-    echo(bendLength);
-    echo(cornerWingLengthUpper);
-    echo(cornerWingLengthLower);
-    
+  let(bendH = dim.z) {    
     BendCenterSection([dim.y,dim.z,dim[3]], [bendLength,bendH,__WallThickness] , reverse=false)
     //ball clip
     WithConnectors(diameter = __WallThickness*__BallClipSizePercent/100, count=__BallClipCount, trapezoidDimensions=dim, shape="sphere", right=true, left=true, condition = __BallClipEnabled, void=true, insetPercent = -__BallClipInset)
@@ -214,5 +228,5 @@ module Corner() {
   }
 }
 
-//TODO construction studs
+
 Cardbox();
