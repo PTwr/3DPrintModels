@@ -19,11 +19,12 @@ __DisplayYWall = true;
 __DisplayBothYWalls = true;
 __DisplayCorners = true;
 __DisplayAllCorners = true;
+__DisplayBothHalvesOfLid = true;
 
 /* [Explode view] */
-__ExplodeUpperAndLower = 150; //[100:300]
+__ExplodeUpperAndLower = 220; //[100:300]
 __ExplodeWallsAndSurfaces = 20; //[0:100]
-
+__ExplodeLidHalves = 50; //[0:100]
 
 /* [Size] */
 __CardStackDimensions = [88,63.5,50]; //CCG
@@ -60,9 +61,14 @@ __MagnetShape = "cylinder"; //[cylinder, cube]
 __PegsEnabled = true;
 __PegsPerCorner = 3;
 __PegsPerWallX = 3;
-__PegsPerWallY = 3;
+__PegsPerWallY = 2;
 __PegSize = 50; //[0:100]
 __PegHeight = 50; //[0:100]
+
+/* [Split lid] */
+__SplitLidEnabled = true;
+__SplitLidPegSize = 50; //[0:100]
+__SplitLidPegHeight = 50; //[0:100]
 
 function floorDim() = [__CardStackDimensions.x + __WallThickness*2, __CardStackDimensions.x + __WallThickness*2, __CardStackDimensions.y + __WallThickness*2, __WallThickness];
 function shorterSide() = min(floorDim()[0], floorDim()[2]);
@@ -85,10 +91,48 @@ module Cardbox() {
   UpperHalf();
 }
 
+module SplitLid(dim) {
+  if (__SplitLidEnabled) {
+    let(dim=floorDim())
+    rotate_copy_z(180, condition = __DisplayBothHalvesOfLid)
+    translate_copy_y(-__ExplodeLidHalves/100*dim[2], copy=false)
+    union() {
+      difference() {
+        children();
+        
+        //scale up to cover up for pegs
+        scale([2,2,2])
+        translate([0,dim[2]/2,0])
+        cube([dim[0],dim[2],dim[3]], center = true);
+      
+        translate(-[dim[0]/2-__WallThickness/2,0,0])
+        rotate([90,0,0])
+        connector_peg(
+            radius = __WallThickness*__SplitLidPegSize/100/2,
+            height = __WallThickness*__SplitLidPegHeight/100,
+            void = true,
+            $fn=20);  
+      }    
+      
+      translate([dim[0]/2-__WallThickness/2,0,0])
+      rotate([-90,0,0])
+      connector_peg(
+          radius = __WallThickness*__SplitLidPegSize/100/2,
+          height = __WallThickness*__SplitLidPegHeight/100,
+          void = false,
+          $fn=20);  
+    }  
+  } else {
+    //no changes
+    children();
+  }
+}
+
 module LowerHalf() {
   if (__DisplayFloor) {
     let(dim = floorDim())
     translate([0,0,-wallAndSurfaceDistance()])
+    SplitLid(dim)
     //magnets Y
     WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=__MagnetCountY, trapezoidDimensions=dim, shape=__MagnetShape, left=true, right=true, condition = __MagnetsEnabled, perpendicularInner = true, bezelThickness = __WallThickness, margin = cornerLowerWidth())
     //magnets X
@@ -114,6 +158,7 @@ module UpperHalf() {
       //face outwards
       rotate([180,0,0])
       let(dim=floorDim())
+      SplitLid(dim)
       //construction pegs X
       WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=__PegsPerWallX, trapezoidDimensions=dim, shape="peg", top=true, bottom=true, condition = __PegsEnabled, void=true, margin=cornerUpperWidth(), perpendicularInner=true, bezelThickness = __WallThickness)
       //construction pegs Y
