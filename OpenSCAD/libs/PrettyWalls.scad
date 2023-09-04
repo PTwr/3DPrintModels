@@ -118,7 +118,7 @@ module BoxWall(dimensions, windowBezelThickness = 5, roundingRadius = 0, extrude
     h = dim[2],
     t = dim[3]
   )
-  let(shell_thickness = window == undef ? max(dimensions) : windowBezelThickness)
+  let(shell_thickness = !window ? max(dimensions) : windowBezelThickness)
   let(cornerRadiusExternal = roundExternal ? roundingRadius : 0)
   let(cornerRadiusInternal = roundInternal ? roundingRadius : 0)
   linear_extrude(t, center = true, scale = extrudeScale, convexity = extrudeConvexity)
@@ -142,6 +142,10 @@ module __Demo() {
     WithConnectors(diameter = 3, count=3, trapezoidDimensions=dimensions, shape="peg", bottom=true, top=true, void = false, perpendicularInner = true, bezelThickness = windowBezelThickness)
     WithConnectors(diameter = 3, count=3, trapezoidDimensions=dimensions, shape="peg", right=true, left=true, void=true, perpendicularInner = true, bezelThickness = windowBezelThickness)
     PrettyBoxWall(dimensions = dimensions, windowBezelThickness = windowBezelThickness*2);
+    
+    
+    translate([0,0,20])
+    PrettyBoxWall(dimensions = dimensions, windowBezelThickness = windowBezelThickness*2, window = false);
   }
 }
 %__Demo();

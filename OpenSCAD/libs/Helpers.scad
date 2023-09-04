@@ -1,5 +1,7 @@
 use <dotSCAD/src/util/find_index.scad>
 
+function int(bool) = bool ? 1 : 0;
+
 module Select(choices, choice) {  
   let(i=find_index(choices,  function(e) e == choice))
   children(i);

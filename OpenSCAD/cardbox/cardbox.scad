@@ -1,13 +1,24 @@
 //Ganimedes Hero tile: 37x46 42mm stack
 //CCG (Terraforming Mars) 63.5x88
+//standard playing cards:  88.1x58.3x
 
 use <../libs/RoundedShapes.scad>
 use <../libs/PrettyWalls.scad>
 use <../libs/CopyPaste.scad>
 use <../libs/BendShapes.scad>
+use <../libs/Helpers.scad>
 use <../libs/dotSCAD/src/part/connector_peg.scad>
 
 //use <modules/floor.scad>
+
+/* [Size] */
+__CardStackDimensions = [88,63.5,50]; //CCG
+__WallThickness = 5;
+__WallFrameThickness = 5;
+//How much of shorter side will corner take in %
+__CornerPercentUpper = 20; //[0:100]
+//How much of shorter side will corner take in %
+__CornerPercentLower = 30; //[0:100]
 
 /* [Parts] */
 __DisplayRoof = true;
@@ -20,20 +31,13 @@ __DisplayBothYWalls = true;
 __DisplayCorners = true;
 __DisplayAllCorners = true;
 __DisplayBothHalvesOfLid = true;
+__DisplaySeparateSidePegs = true;
+__DisplaySeparateLidPegs = true;
 
 /* [Explode view] */
 __ExplodeUpperAndLower = 220; //[100:300]
 __ExplodeWallsAndSurfaces = 20; //[0:100]
 __ExplodeLidHalves = 50; //[0:100]
-
-/* [Size] */
-__CardStackDimensions = [88,63.5,50]; //CCG
-__WallThickness = 5;
-__WallFrameThickness = 5;
-//How much of shorter side will corner take in %
-__CornerPercentUpper = 20; //[0:100]
-//How much of shorter side will corner take in %
-__CornerPercentLower = 30; //[0:100]
 
 /* [Eye candy] */
 __Windowed = true;
@@ -64,9 +68,11 @@ __PegsPerWallX = 3;
 __PegsPerWallY = 2;
 __PegSize = 50; //[0:100]
 __PegHeight = 50; //[0:100]
+__PegsSeparately = true;
 
 /* [Split lid] */
 __SplitLidEnabled = true;
+__SplitLidPegsEnabled = true;
 __SplitLidPegSize = 50; //[0:100]
 __SplitLidPegHeight = 50; //[0:100]
 
@@ -89,6 +95,54 @@ function RoundingRadiusZ() = min(floorDim().x, floorDim().y)*__RoundingRadiusPer
 module Cardbox() {
   LowerHalf();
   UpperHalf();
+  
+  color("red")
+  SeparatePegs();
+}
+
+module SeparatePegs() {
+  let(xOffset = floorDim()[0]) {
+    if (__PegsSeparately && __DisplaySeparateLidPegs && __SplitLidPegsEnabled && __SplitLidEnabled) {
+      let(pegCount = 4)
+      let(radius = __WallThickness*__SplitLidPegSize/100/2)
+      let(height = __WallThickness*__SplitLidPegHeight/100)
+      for(i = [1:1:pegCount])
+        translate([xOffset,-radius*4*1,0])
+      ConnectorPeg(pegCount, radius, height);  
+    }
+    if (__PegsSeparately && __DisplaySeparateSidePegs) {
+      let(radius = __WallThickness*__PegSize/100/2)
+      let(height = __WallThickness*__PegHeight/100) {
+        translate([xOffset,radius*4*1,0])
+        let(pegCount = __PegsPerWallX*2)
+        ConnectorPeg(pegCount, radius, height);
+        
+        translate([xOffset,radius*4*2,0])
+        let(pegCount = __PegsPerWallY*2)
+        ConnectorPeg(pegCount, radius, height);
+        
+        translate([xOffset,radius*4*3,0])
+        let(pegCount = __PegsPerCorner*2)
+        ConnectorPeg(pegCount, radius, height);
+        
+        translate([xOffset,radius*4*4,0])
+        let(pegCount = __PegsPerCorner*2)
+        ConnectorPeg(pegCount, radius, height);
+      }
+    }
+  }
+}
+
+module ConnectorPeg(pegCount, radius, height) {
+  for(i = [1:1:pegCount])
+    translate([i*radius*4,0,height])
+    mirror_copy_z()
+    connector_peg(
+        radius = radius,
+        height = height,
+        void = false,
+        ends = false,
+        $fn=20);
 }
 
 module SplitLid(dim) {
@@ -100,27 +154,32 @@ module SplitLid(dim) {
       difference() {
         children();
         
-        //scale up to cover up for pegs
+        //scale up to cover up for pegs and ghosting
         scale([2,2,2])
         translate([0,dim[2]/2,0])
         cube([dim[0],dim[2],dim[3]], center = true);
       
-        translate(-[dim[0]/2-__WallThickness/2,0,0])
-        rotate([90,0,0])
+        if (__SplitLidPegsEnabled) {
+          mirror_copy_x(condition = __PegsSeparately)
+          translate(-[dim[0]/2-__WallThickness/2,0,0])
+          rotate([90,0,0])
+          connector_peg(
+              radius = __WallThickness*__SplitLidPegSize/100/2,
+              height = __WallThickness*__SplitLidPegHeight/100,
+              void = true,
+              $fn=20);    
+        }
+      } 
+      
+      if (!__PegsSeparately && __SplitLidPegsEnabled) {
+        translate([dim[0]/2-__WallThickness/2,0,0])
+        rotate([-90,0,0])
         connector_peg(
             radius = __WallThickness*__SplitLidPegSize/100/2,
             height = __WallThickness*__SplitLidPegHeight/100,
-            void = true,
+            void = false,
             $fn=20);  
-      }    
-      
-      translate([dim[0]/2-__WallThickness/2,0,0])
-      rotate([-90,0,0])
-      connector_peg(
-          radius = __WallThickness*__SplitLidPegSize/100/2,
-          height = __WallThickness*__SplitLidPegHeight/100,
-          void = false,
-          $fn=20);  
+      }
     }  
   } else {
     //no changes
@@ -189,7 +248,7 @@ module Wall(dim, offset, mirror, roundingRadius, magnetCount, pegCount) {
   //vertical
   rotate([90,0,0])
   //construction pegs
-  WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=pegCount, trapezoidDimensions=dim, shape="peg", top=true, condition = __PegsEnabled, void=false)
+  WithConnectors(diameter=__WallThickness*__PegSize/100,height=__WallThickness*__PegHeight/100,count=pegCount, trapezoidDimensions=dim, shape="peg", top=true, condition = __PegsEnabled, void=__PegsSeparately)
   //magnets
   WithConnectors(diameter=__MagnetDiameter,height=__MagnetHeight,count=magnetCount, trapezoidDimensions=dim, shape=__MagnetShape, bottom=true, condition = __MagnetsEnabled)
   //ball clip
@@ -207,14 +266,14 @@ module Corners() {
   mirror([1,0,0])
   //move to corner of floor
   translate([floorDim()[0]/2,floorDim()[2]/2,0])
-  union() {
+  UnionOrDiff(!__PegsSeparately) {
     //put corner at [0,0]
     translate([-RoundingRadiusZ(),-RoundingRadiusZ(),0])
     //Z position to match lids
     translate([0,0,+__CardStackDimensions.z/2 + __WallThickness/2])
     Corner();
-    
-    CornerPegs();
+        
+    CornerPegs(void = __PegsSeparately);
   }
 }
 
@@ -249,7 +308,7 @@ module CornerPegs(void = false) {
     for(p = arc) {
       translate(p)
       //down facing
-      rotate([180,0,0])
+      rotate([180-180*int(__PegsSeparately),0,0])
       connector_peg(
         radius = __WallThickness*__PegSize/100/2,
         height = __WallThickness*__PegSize/100,
